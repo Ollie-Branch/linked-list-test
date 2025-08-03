@@ -71,5 +71,29 @@ int main(int argv, char **argc) {
     printf("List Tail: %i \n",
            *(int *)LL_NodeGetDataField(LL_GetTail(int_list)));
 
+    printf("\n\n Removing the head of the list\n");
+    LL_NodeDelete(int_list, 0);
+    printf("%i", *(int *)LL_GetNodeData(int_list, 0));
+    for (int i = 1; i < LL_GetNumNodes(int_list) + 1; i++) {
+        printf(" -> %i", *(int *)LL_GetNodeData(int_list, i));
+    }
+
+    printf("\n\n Removing element 5 of the list\n");
+    LL_NodeDelete(int_list, 4);
+    printf("%i", *(int *)LL_GetNodeData(int_list, 0));
+    for (int i = 1; i < LL_GetNumNodes(int_list) + 1; i++) {
+        printf(" -> %i", *(int *)LL_GetNodeData(int_list, i));
+    }
+
+    printf("\n\n Removing the tail of the list\n");
+    LL_NodeDelete(int_list, LL_GetNumNodes(int_list));
+    printf("%i", *(int *)LL_GetNodeData(int_list, 0));
+    for (int i = 1; i < LL_GetNumNodes(int_list) + 1; i++) {
+        printf(" -> %i", *(int *)LL_GetNodeData(int_list, i));
+    }
+
+    printf("\n\n Deleting the whole list");
+    LL_Delete(int_list);
+
     return 0;
 }

@@ -1,4 +1,5 @@
 #include "ll.h"
+#include <stdio.h>
 #include <stdlib.h>
 
 typedef struct LinkedList_t {
@@ -61,8 +62,8 @@ LinkedList_t *LL_Create(LinkedList_Node_t *node) {
 */
 void LL_InsertNode(LinkedList_t *list, LinkedList_Node_t *node_to_insert,
                    uint16_t index) {
+    LinkedList_Node_t *previous_node = NULL;
     LinkedList_Node_t *current_node = list->head;
-    LinkedList_Node_t *next_node = NULL;
 
     // base cases that can allow the linked list to *sometimes* be performant
     if (index == 0) {
@@ -82,13 +83,11 @@ void LL_InsertNode(LinkedList_t *list, LinkedList_Node_t *node_to_insert,
     }
 
     // Iterate through the list, if no other method of insertion was successful.
-    // we do (index - 1), because when inserting between elements we insert
-    // AFTER the current element we're processing, this is a hacky solution for
-    // that bug.
-    for (int i = 0; i < (index - 1); i++) {
+    for (int i = 0; i < index; i++) {
+        previous_node = current_node;
         /*
         ** if we find the end of the list before the specified index, we just
-        ** set the node at the end of the list.
+        ** insert the node at the end of the list.
         ** Due to the base cases above, this if statement SHOULD NOT ever be
         ** run. It only exists to account for unforeseen consequences.
         */
@@ -106,9 +105,8 @@ void LL_InsertNode(LinkedList_t *list, LinkedList_Node_t *node_to_insert,
 
     // we are at the index we want, and can insert the node, moving around the
     // other nodes beforehand.
-    next_node = current_node->next;
-    current_node->next = node_to_insert;
-    node_to_insert->next = next_node;
+    previous_node->next = node_to_insert;
+    node_to_insert->next = current_node;
     list->num_nodes++;
     return;
 }
@@ -138,21 +136,91 @@ LinkedList_Node_t *LL_GetTail(LinkedList_t *list) { return list->tail; }
 
 uint16_t LL_GetNumNodes(LinkedList_t *list) { return list->num_nodes; }
 
-void LL_DeleteNode(LinkedList_t *list, uint16_t index) {
-    // TODO implement
+void LL_NodeDelete(LinkedList_t *list, uint16_t index) {
+    // naive overflow prevention (otherwise we'd be freeing information that had
+    // was never initialized to begin with)
+    if (index > list->num_nodes) {
+        index = list->num_nodes;
+    }
+
+    LinkedList_Node_t *previous_node = list->head;
+    LinkedList_Node_t *current_node = NULL;
+    LinkedList_Node_t *next_node = NULL;
+
+    // base cases
+    if (index == 0 && list->head->next != NULL) {
+        current_node = list->head->next;
+        free(list->head);
+        list->head = current_node;
+        list->num_nodes--;
+        return;
+    } else if (index == 0) {
+        // only one element in the list, free it then delete the linked list
+        free(list->head);
+        // shouldn't have to set this?
+        list->num_nodes--;
+        free(list);
+        return;
+    }
+
+    if (list->head->next != NULL) {
+        current_node = list->head->next;
+    }
+    if (list->head->next->next != NULL) {
+        next_node = list->head->next->next;
+    }
+
+    // normally we'd remove the tail here, but we don't have any way of finding
+    // the previous node of the tail since this list is only singly linked.
+
+    // Also, we're only comparing with less than cause we're starting past the
+    // head of the list.
+    for (int i = 0; i <= index; i++) {
+        // I trust my implementation too much to bother error checking these
+        // nodes.
+        previous_node = previous_node->next;
+        current_node = current_node->next;
+        if (next_node->next == NULL) {
+            /*
+            ** if next_node's next pointer is null, and the intention is to
+            ** increment it, then we are at the end of the list.
+            **
+            ** FOOTGUN: At this point, current_node and next_node are the same,
+            ** 	since current_node was set to next_node, while next_node
+            ** 	wasn't able to increment. So we must set the previous node's
+            ** 	next pointer and not the current node's next pointer.
+            */
+            previous_node->next = NULL;
+            current_node->next = NULL;
+            free(current_node);
+            current_node = NULL;
+            next_node = NULL;
+            // update the tail don't forget it
+            list->tail = previous_node;
+            list->num_nodes--;
+            return;
+        } else {
+            next_node = next_node->next;
+        }
+    }
+    if (index == list->num_nodes) {
+        // removing tail
+        printf("removing tail");
+        previous_node->next = NULL;
+        free(current_node);
+        list->num_nodes--;
+    } else {
+        // set previous node's next pointer to skip past current node
+        // and onto next node. We then free the current node.
+        previous_node->next = next_node;
+        free(current_node);
+        list->num_nodes--;
+    }
 }
 
-/*
-** If this node exists, we already have the size of the data from the size
-** member of the struct, so we shouldn't need any more arguments other than the
-** pointer to the node itself.
-*/
-// void LL_NodeDelete(LinkedList_Node_t *node) {
-//     /*
-//     ** very surprised free doesn't force us to specify a size, does malloc
-//     keep
-//     ** track of the size of allocations for us? Certainly something to
-//     ** investigate later.
-//     */
-//     free(node);
-// }
+void LL_Delete(LinkedList_t *list) {
+    uint16_t nodes_to_delete = list->num_nodes;
+    for (int i = 0; i <= nodes_to_delete; i++) {
+        LL_NodeDelete(list, 0);
+    }
+}

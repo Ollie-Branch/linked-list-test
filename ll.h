@@ -16,7 +16,6 @@ typedef struct LinkedList_Node_t LinkedList_Node_t;
 LinkedList_Node_t *LL_NodeCreate(size_t data_size);
 size_t LL_NodeGetSize(LinkedList_Node_t *node);
 void *LL_NodeGetDataField(LinkedList_Node_t *node);
-void LL_NodeDelete(LinkedList_Node_t *node);
 
 /*
 ** I don't yet know a way to make this safer, ideally we'd check types of insert
@@ -39,7 +38,7 @@ LinkedList_t *LL_Create(LinkedList_Node_t *head);
 void LL_Delete(LinkedList_t *list);
 void *LL_GetNodeData(LinkedList_t *list, uint16_t index);
 uint16_t LL_GetNumNodes(LinkedList_t *list);
-void LL_DeleteNode(LinkedList_t *list, uint16_t index);
+void LL_NodeDelete(LinkedList_t *list, uint16_t index);
 LinkedList_Node_t *LL_GetTail(LinkedList_t *list);
 LinkedList_Node_t *LL_GetHead(LinkedList_t *list);
 
